@@ -288,6 +288,139 @@ resource "github_branch_protection_v3" "branch_protection" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Manage Rulesets
+# https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_ruleset
+# ---------------------------------------------------------------------------------------------------------------------
+
+locals {
+  rulesets_map = { for r in var.rulesets : r.name => r }
+}
+
+resource "github_repository_ruleset" "ruleset" {
+  for_each = local.rulesets_map
+
+  # ensure we have all members and collaborators added before applying
+  # any configuration for them
+  depends_on = [
+    github_repository_collaborator.collaborator,
+    github_team_repository.team_repository,
+    github_team_repository.team_repository_by_slug,
+    github_branch.branch,
+  ]
+
+  repository  = github_repository.repository.name
+  target      = try(local.rulesets_map[each.key].target, "branch")
+  name        = try(local.rulesets_map[each.key].name, null)
+  enforcement = try(local.rulesets_map[each.key].enforcement, null)
+
+  rules {
+    creation                      = try(local.rulesets_map[each.key].rules.creation, false)
+    deletion                      = try(local.rulesets_map[each.key].rules.deletion, true)
+    non_fast_forward              = try(local.rulesets_map[each.key].rules.non_fast_forward, false)
+    required_linear_history       = try(local.rulesets_map[each.key].rules.required_linear_history, false)
+    required_signatures           = try(local.rulesets_map[each.key].rules.required_signatures, false)
+    update                        = try(local.rulesets_map[each.key].rules.update, false)
+    update_allows_fetch_and_merge = try(local.rulesets_map[each.key].rules.update_allows_fetch_and_merge, false)
+
+    dynamic "branch_name_pattern" {
+      for_each = try([local.rulesets_map[each.key].rules.branch_name_pattern], [])
+      content {
+        operator = branch_name_pattern.value.operator
+        pattern  = branch_name_pattern.value.pattern
+        name     = try(branch_name_pattern.value.name, null)
+        negate   = try(branch_name_pattern.value.negate, false)
+      }
+    }           
+
+    dynamic "commit_author_email_pattern" {
+      for_each = try([local.rulesets_map[each.key].rules.commit_author_email_pattern], [])
+      content {
+        operator = commit_author_email_pattern.value.operator
+        pattern  = commit_author_email_pattern.value.pattern
+        name     = try(commit_author_email_pattern.value.name, null)
+        negate   = try(commit_author_email_pattern.value.negate, false)
+      }
+    }   
+
+    dynamic "commit_message_pattern" {
+      for_each = try([local.rulesets_map[each.key].rules.commit_message_pattern], [])
+      content {
+        operator = commit_message_pattern.value.operator
+        pattern  = commit_message_pattern.value.pattern
+        name     = try(commit_message_pattern.value.name, null)
+        negate   = try(commit_message_pattern.value.negate, false)
+      }
+    }        
+
+    dynamic "committer_email_pattern" {
+      for_each = try([local.rulesets_map[each.key].rules.committer_email_pattern], [])
+      content {
+        operator = committer_email_pattern.value.operator
+        pattern  = committer_email_pattern.value.pattern
+        name     = try(committer_email_pattern.value.name, null)
+        negate   = try(committer_email_pattern.value.negate, false)
+      }
+    }       
+
+    dynamic "pull_request" {
+      for_each = try([local.rulesets_map[each.key].rules.pull_request], [])
+      content {
+        dismiss_stale_reviews_on_push    = try(pull_request.value.dismiss_stale_review_on_push, false)
+        require_code_owner_review        = try(pull_request.value.require_code_owner_review, false)
+        require_last_push_approval       = try(pull_request.value.require_last_push_approval, false)
+        required_approving_review_count  = try(pull_request.value.require_approving_review_count, 1)
+      }
+    }
+
+    dynamic "required_deployments" {
+      for_each = try(local.rulesets_map[each.key].required_deployments, [])
+      content {
+        required_deployment_environments = try(required_deployments.value.required_deployment_environments, [])
+      }
+    }
+
+    dynamic "required_status_checks" {
+      for_each = try(local.rulesets_map[each.key].required_status_checks, [])
+      content {
+        required_check {
+          context        = required_status_checks.value.context
+          integration_id = try(required_status_checks.value.integration_id, null)
+        }
+      }
+    }
+
+    dynamic "tag_name_pattern" {
+      for_each = try(local.rulesets_map[each.key].tag_name_pattern, [])
+      content {
+        operator = tag_name_pattern.value.operator
+        pattern  = tag_name_pattern.value.pattern
+        name     = try(tag_name_pattern.value.name, null)
+        negate   = try(tag_name_pattern.value.negate, false)
+      }
+    }
+  }
+
+  dynamic "bypass_actors" {
+    for_each = try(local.rulesets_map[each.key].bypass_actors, [])
+    content {
+      actor_id    = bypass_actors.value.actor_id
+      actor_type  = bypass_actors.value.name
+      bypass_mode = try(bypass_actors.value.bypass_mode, null)
+    }
+  }
+
+  dynamic "conditions" {
+    for_each = try(local.rulesets_map[each.key].conditions, [])
+    content {
+      ref_name {
+        exclude = conditions.value.ref_name.exclude
+        include = conditions.value.ref_name.include
+      }
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Issue Labels
 # ---------------------------------------------------------------------------------------------------------------------
 

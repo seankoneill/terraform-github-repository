@@ -373,6 +373,100 @@ variable "branch_protections_v4" {
   }
 }
 
+variable "rulesets" {
+  description = "(Optional) "
+  type        = any
+
+  # see: https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_ruleset
+  #
+  # type = list(object(
+  #   enforcement            = string
+  #   name                   = string
+  #
+  #   rules = list(object(
+  #     branch_name_pattern  = optional(object(
+  #       operator = string
+  #       pattern  = string
+  #       name     = optional(string)
+  #       negate   = optional(bool)
+  #     ))
+  #     commit_author_email_pattern = optional(object(
+  #       operator = string
+  #       pattern  = string
+  #       name     = optional(string)
+  #       negate   = optional(bool)
+  #     ))
+  #     commit_message_pattern = optional(object(
+  #       operator = string
+  #       pattern  = string
+  #       name     = optional(string)
+  #       negate   = optional(bool)
+  #     ))
+  #     committer_email_pattern = optional(object(
+  #       operator = string
+  #       pattern  = string
+  #       name     = optional(string)
+  #       negate   = optional(bool)
+  #     ))
+  #     creation         = optional(bool)
+  #     deletion         = optional(bool)
+  #     non_fast_forward = optional(bool)
+  #     pull_request  = optional(object(
+  #       dismiss_stale_reviews_on_push    = optional(bool)
+  #       require_code_onwer_review        = optional(bool)
+  #       require_last_push_approval       = optional(bool)
+  #       require_approving_review_count   = optional(number)
+  #       require_review_thread_resolution = optional(number)
+  #     ))
+  #     required_deployments  = optional(object(
+  #       required_deployment_environments = list(string)
+  #     ))
+  #     required_linear_history = optional(bool)
+  #     required_signatures     = optional(bool)
+  #     required_status_checks  = optional(object(
+  #       required_check = object(
+  #         context        = string
+  #         integration_id = optional(number)
+  #       ) 
+  #       strict_required_status_checks_policy = optional(bool)
+  #     ))
+  #     tag_name_pattern  = optional(object(
+  #       operator = string
+  #       pattern  = string
+  #       name     = optional(string)
+  #       negate   = optional(bool)
+  #     ))
+  #     update                        = optional(bool)
+  #     update_allows_fetch_and_merge = optional(bool)
+  #   ))
+  #
+  #   target = string
+  #
+  #   bypass_actors = optional(list(object(
+  #     actor_id    = number
+  #     actor_type  = string
+  #     bypass_mode = optional(string)
+  #   )))
+  #   
+  #   conditons = list(object(
+  #     ref_name = object(
+  #       exlude  = list(string)
+  #       include = list(string)
+  #     )
+  #   ))
+  #
+  #   repository = optional(string) 
+  #
+  # ))
+
+  default = []
+
+  # Example:
+  # rulesets = [{
+  # }]
+
+}
+
 variable "issue_labels_merge_with_github_labels" {
   description = "(Optional) Specify if you want to merge and control githubs default set of issue labels."
   type        = bool
@@ -548,6 +642,12 @@ variable "archive_on_destroy" {
   type        = string
   description = "(Optional) Set to `false` to not archive the repository instead of deleting on destroy."
   default     = true
+}
+
+variable "prevent_destroy" {
+  type = bool
+  description = "(Optional) Set to `false` to mark github_repository resource as prevent_destroy."
+  default = false
 }
 
 variable "app_installations" {
