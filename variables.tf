@@ -644,12 +644,6 @@ variable "archive_on_destroy" {
   default     = true
 }
 
-variable "prevent_destroy" {
-  type = bool
-  description = "(Optional) Set to `false` to mark github_repository resource as prevent_destroy."
-  default = false
-}
-
 variable "app_installations" {
   type        = set(string)
   description = "(Optional) A list of GitHub App IDs to be installed in this repository."
